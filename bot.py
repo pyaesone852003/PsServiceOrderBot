@@ -2,13 +2,16 @@ import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 
-# Bot Token အသစ်
+# Bot Token
 TOKEN = "8899600101:AAH0_kwUb6WfPEbX1g31zakyo5v7IjBPsmM"
 # သင့်ရဲ့ Admin Telegram User ID
 ADMIN_ID = 8643293859
 
 # /start နှိပ်လျှင် ပထမဆုံးပေါ်မည့် Menu
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # အသစ်ဝင်လာတိုင်း Data များကို ရှင်းလင်းထားမည်
+    context.user_data.clear()
+    
     keyboard = [
         [InlineKeyboardButton("📱 Telegram Account Service (SMS)", callback_data="srv_sms")],
         [InlineKeyboardButton("🔄 Telegram Old Account Recover", callback_data="srv_old")],
@@ -36,7 +39,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     data = query.data
     
-    # ရွေးချယ်လိုက်သော Service ကို မှတ်သားထားမည်
+    # ရွေးချယ်လိုက်သော Service များကို သတ်မှတ်ခြင်း
     service_names = {
         "srv_sms": "Telegram Account Service (SMS fee ကျော်ပေးခြင်း)",
         "srv_old": "Telegram Old Account Recover",
@@ -46,12 +49,31 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if data in service_names:
         context.user_data['selected_service'] = service_names[data]
+        context.user_data['step'] = data  # ဘယ် Service လဲဆိုတာ မှတ်ထားရန်
         
-        # Service ပေါ်မူတည်၍ တောင်းမည့် Form မေးခွန်းများ
-        if data == "srv_ready":
-            prompt = f"ရွေးချယ်ထားသော Service: *{service_names[data]}*\n\nအကောင့်အရေအတွက် ဘယ်လောက် လိုချင်ပါသလဲ? (ဖုန်းနံပါတ် သို့မဟုတ် အသေးစိတ် ဖြည့်ပေးပါ)"
-        else:
-            prompt = f"ရွေးချယ်ထားသော Service: *{service_names[data]}*\n\nကျေးဇူးပြု၍ သက်ဆိုင်ရာ Telegram ဖုန်းနံပါတ်နှင့် အသေးစိတ် အချက်အလက်များကို ဖြည့်ပေးပါ:"
+        # Service တစ်ခုချင်းအလိုက် တောင်းမည့် Form မေးခွန်းများ
+        if data == "srv_sms":
+            prompt = (
+                f"ရွေးချယ်ထားသော Service: *{service_names[data]}*\n\n"
+                "ကျေးဇူးပြု၍ Telegram ဖွင့်ချင်တဲ့ **ဖုန်းနံပါတ်** ကို ပို့ပေးပါ။"
+            )
+        elif data == "srv_old":
+            prompt = (
+                f"ရွေးချယ်ထားသော Service: *{service_names[data]}*\n\n"
+                "ကျေးဇူးပြု၍ ပြန်ဆယ်ချင်တဲ့ telegram ဖွင့်ထားတဲ့ **ဖုန်းနံပါတ်** ကို ပို့ပေးပါ။"
+            )
+        elif data == "srv_hack":
+            prompt = (
+                f"ရွေးချယ်ထားသော Service: *{service_names[data]}*\n\n"
+                "ကျေးဇူးပြု၍ အောက်ပါပုံစံအတိုင်း အချက်အလက်များ ပို့ပေးပါ -\n"
+                "1. ပြန်ဆယ်ချင်တဲ့ telegram ဖွင့်ထားတဲ့ ဖုန်းနံပါတ်\n"
+                "2. အရင်ကချိတ်ထားတဲ့ Gmail"
+            )
+        elif data == "srv_ready":
+            prompt = (
+                f"ရွေးချယ်ထားသော Service: *{service_names[data]}*\n\n"
+                "အကောင့်အရေအတွက် ဘယ်လောက် လိုချင်လဲ ဖြည့်ပေးပါ။"
+            )
             
         await query.edit_message_text(text=prompt, parse_mode="Markdown")
 
