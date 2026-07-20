@@ -7,16 +7,26 @@ TOKEN = "8899600101:AAH0_kwUb6WfPEbX1g31zakyo5v7IjBPsmM"
 # သင့်ရဲ့ Admin Telegram User ID
 ADMIN_ID = 8643293859
 
+# ငွေပေးချေမှု အချက်အလက်များ (ဖုန်းနံပါတ်ကို Code block ထဲထည့်ထားသဖြင့် နှိပ်ရုံဖြင့် Copy ကူးနိုင်သည်)
+PAYMENT_INFO = (
+    "\n\n━━━━━━━━━━━━━━━\n"
+    "💳 **ငွေပေးချေရန် နည်းလမ်းများ:**\n"
+    "• KPay / Wave Pay / Aya Pay / UAB Pay\n"
+    "• Phone: `09779412905`\n"
+    "• Name: Mg Pyae Sone Aung\n"
+    "━━━━━━━━━━━━━━━\n"
+    "⚠️ *ငွေလွှဲပြီးပါက ငွေလွှဲစလစ် (Screenshot) နှင့်တကွ ဆက်လက်ပေးပို့ပေးပါခင်ဗျာ။*"
+)
+
 # /start နှိပ်လျှင် ပထမဆုံးပေါ်မည့် Menu
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # အသစ်ဝင်လာတိုင်း Data များကို ရှင်းလင်းထားမည်
     context.user_data.clear()
     
     keyboard = [
-        [InlineKeyboardButton("📱 Telegram Account Service (SMS)", callback_data="srv_sms")],
-        [InlineKeyboardButton("🔄 Telegram Old Account Recover", callback_data="srv_old")],
-        [InlineKeyboardButton("🔓 Telegram Hack Account Recovery", callback_data="srv_hack")],
-        [InlineKeyboardButton("📦 Telegram Readymade Account", callback_data="srv_ready")],
+        [InlineKeyboardButton("📱 Telegram Account Service (SMS) - 10k", callback_data="srv_sms")],
+        [InlineKeyboardButton("🔄 Telegram Old Account Recover - 15k", callback_data="srv_old")],
+        [InlineKeyboardButton("🔓 Telegram Hack Account Recovery - 30k", callback_data="srv_hack")],
+        [InlineKeyboardButton("📦 Telegram Readymade Account - 5k", callback_data="srv_ready")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
@@ -39,28 +49,28 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     data = query.data
     
-    # ရွေးချယ်လိုက်သော Service များကို သတ်မှတ်ခြင်း
     service_names = {
-        "srv_sms": "Telegram Account Service (SMS fee ကျော်ပေးခြင်း)",
-        "srv_old": "Telegram Old Account Recover",
-        "srv_hack": "Telegram Account Hack Recovery",
-        "srv_ready": "Telegram Readymade Account"
+        "srv_sms": "Tg new acc create (10k - ၁ သောင်းကျပ်)",
+        "srv_old": "Tg old acc rc (15k - ၁ သောင်းခွဲကျပ်)",
+        "srv_hack": "Tg acc hack rc (30k - ၃ သောင်းကျပ်)",
+        "srv_ready": "Tg ready made acc (5k - ၅ ထောင်ကျပ်)"
     }
     
     if data in service_names:
         context.user_data['selected_service'] = service_names[data]
-        context.user_data['step'] = data  # ဘယ် Service လဲဆိုတာ မှတ်ထားရန်
         
-        # Service တစ်ခုချင်းအလိုက် တောင်းမည့် Form မေးခွန်းများ
+        # Service တစ်ခုချင်းအလိုက် ဈေးနှုန်းနှင့် တောင်းမည့် Form မေးခွန်းများ + ငွေပေးချေမှုအချက်အလက်
         if data == "srv_sms":
             prompt = (
                 f"ရွေးချယ်ထားသော Service: *{service_names[data]}*\n\n"
                 "ကျေးဇူးပြု၍ Telegram ဖွင့်ချင်တဲ့ **ဖုန်းနံပါတ်** ကို ပို့ပေးပါ။"
+                + PAYMENT_INFO
             )
         elif data == "srv_old":
             prompt = (
                 f"ရွေးချယ်ထားသော Service: *{service_names[data]}*\n\n"
                 "ကျေးဇူးပြု၍ ပြန်ဆယ်ချင်တဲ့ telegram ဖွင့်ထားတဲ့ **ဖုန်းနံပါတ်** ကို ပို့ပေးပါ။"
+                + PAYMENT_INFO
             )
         elif data == "srv_hack":
             prompt = (
@@ -68,11 +78,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "ကျေးဇူးပြု၍ အောက်ပါပုံစံအတိုင်း အချက်အလက်များ ပို့ပေးပါ -\n"
                 "1. ပြန်ဆယ်ချင်တဲ့ telegram ဖွင့်ထားတဲ့ ဖုန်းနံပါတ်\n"
                 "2. အရင်ကချိတ်ထားတဲ့ Gmail"
+                + PAYMENT_INFO
             )
         elif data == "srv_ready":
             prompt = (
                 f"ရွေးချယ်ထားသော Service: *{service_names[data]}*\n\n"
                 "အကောင့်အရေအတွက် ဘယ်လောက် လိုချင်လဲ ဖြည့်ပေးပါ။"
+                + PAYMENT_INFO
             )
             
         await query.edit_message_text(text=prompt, parse_mode="Markdown")
@@ -83,7 +95,6 @@ async def receive_form_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_input = update.message.text
     selected_service = context.user_data.get('selected_service')
     
-    # Service မရွေးရသေးဘဲ စာပို့မိပါက ပထမဆုံး /start ပြန်ခိုင်းရန်
     if not selected_service:
         await update.message.reply_text("ကျေးဇူးပြု၍ ပထမဆုံး /start ကို နှိပ်ပြီး Service တစ်ခုကို အရင်ရွေးချယ်ပေးပါ။")
         return
@@ -105,6 +116,22 @@ async def receive_form_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # ဖောက်သည် (Customer) ဘက်သို့ အတည်ပြုစာ ပို့ရန်
     success_text = (
         "✅ **Order တင်ခြင်း အောင်မြင်ပါသည်။**\n\n"
+        "သင့်ရဲ့ အချက်အလက်များနှင့် ငွေလွှဲအချက်အလက်များကို လက်ခံရရှိပါပြီ။ Admin မှ စစ်ဆေးပြီး ဆက်သွယ်ပေးပါမည်။\n\n"
+        "ပင်မမီနူးသို့ ပြန်သွားရန် /start ကို နှိပ်ပါ။"
+    )
+    await update.message.reply_text(success_text, parse_mode="Markdown")
+    
+    context.user_data.clear()
+
+if __name__ == '__main__':
+    app = ApplicationBuilder().token(TOKEN).build()
+    
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CallbackQueryHandler(button_handler))
+    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), receive_form_data))
+    
+    print("Service Bot စတင်အလုပ်လုပ်နေပါပြီ...")
+    app.run_polling()
         "သင့်ရဲ့ အချက်အလက်များကို လက်ခံရရှိပါပြီ။ Admin မှ မကြာမီ ဆက်သွယ်ပေးပါမည်။\n\n"
         "ပင်မမီနူးသို့ ပြန်သွားရန် /start ကို နှိပ်ပါ။"
     )
