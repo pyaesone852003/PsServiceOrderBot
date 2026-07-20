@@ -1,22 +1,9 @@
 import os
-import threading
-from http.server import HTTPServer, BaseHTTPRequestHandler
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 
 TOKEN = "8899600101:AAH0_kwUb6WfPEbX1g31zakyo5v7IjBPsmM"
 ADMIN_ID = 8643293859
-
-class SimpleHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"Bot is running successfully!")
-
-def run_web_server():
-    port = int(os.environ.get("PORT", 10000))
-    server = HTTPServer(("0.0.0.0", port), SimpleHandler)
-    server.serve_forever()
 
 PAYMENT_INFO = (
     "\n\n--------------------------------\n"
@@ -25,7 +12,7 @@ PAYMENT_INFO = (
     "• Phone: 09779412905\n"
     "• Name: Mg Pyae Sone Aung\n"
     "--------------------------------\n"
-    "👇 ငွေလွှဲပြီးပါက ငွေလွှဲစလစ် (Screenshot ပုံ) နှင့်တကွ လိုအပ်သော အချက်အလက်များကို ပုံနှင့် စာသားတွဲလျက် ပို့ပေးပါခင်ဗျာ။"
+    "ငွေလွှဲပြီးပါက ငွေလွှဲစလစ် (Screenshot) နှင့်တကွ ဆက်လက်ပေးပို့ပေးပါခင်ဗျာ။"
 )
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -70,13 +57,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if data == "srv_sms":
             prompt = (
                 f"ရွေးချယ်ထားသော Service: {service_names[data]}\n\n"
-                "ကျေးဇူးပြု၍ Telegram ဖွင့်ချင်တဲ့ ဖုန်းနံပါတ်ကို ပို့ပေးပါ။"
+                "ကျေးဇူးပြု၍ Telegram ဖွင့်ချင်တဲ့ ဖုန်းနံပါတ် ကို ပို့ပေးပါ။"
                 + PAYMENT_INFO
             )
         elif data == "srv_old":
             prompt = (
                 f"ရွေးချယ်ထားသော Service: {service_names[data]}\n\n"
-                "ကျေးဇူးပြု၍ ပြန်ဆယ်ချင်တဲ့ telegram ဖွင့်ထားတဲ့ ဖုန်းနံပါတ်ကို ပို့ပေးပါ။"
+                "ကျေးဇူးပြု၍ ပြန်ဆယ်ချင်တဲ့ telegram ဖွင့်ထားတဲ့ ဖုန်းနံပါတ် ကို ပို့ပေးပါ။"
                 + PAYMENT_INFO
             )
         elif data == "srv_hack":
@@ -94,17 +81,47 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 + PAYMENT_INFO
             )
             
-        await query.edit_message_text(text=prompt, parse_mode="Markdown")
+        await query.edit_message_text(text=prompt)
 
 async def receive_form_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
+    user_input = update.message.text
     selected_service = context.user_data.get('selected_service')
     
     if not selected_service:
         await update.message.reply_text("ကျေးဇူးပြု၍ ပထမဆုံး /start ကို နှိပ်ပြီး Service တစ်ခုကို အရင်ရွေးချယ်ပေးပါ။")
         return
 
-    if update.message.photo:
+    admin_message = (
+        "Order အသစ် ဝင်ရောက်လာပါပြီ!\n\n"
+        f"Service: {selected_service}\n"
+        f"Customer: @{user.username or 'No Username'} (ID: {user.id})\n"
+        f"ဖြည့်ထားသော အချက်အလက်:\n{user_input}"
+    )
+    
+    try:
+        await context.bot.send_message(chat_id=ADMIN_ID, text=admin_message)
+    except Exception as e:
+        print(f"Admin ထံ Noti ပို့မရပါ: {e}")
+        
+    success_text = (
+        "Order တင်ခြင်း အောင်မြင်ပါသည်။\n\n"
+        "သင့်ရဲ့ အချက်အလက်များနှင့် ငွေလွှဲအချက်အလက်များကို လက်ခံရရှိပါပြီ။ Admin မှ စစ်ဆေးပြီး ဆက်သွယ်ပေးပါမည်။\n\n"
+        "ပင်မမီနူးသို့ ပြန်သွားရန် /start ကို နှိပ်ပါ။"
+    )
+    await update.message.reply_text(success_text)
+    
+    context.user_data.clear()
+
+if __name__ == '__main__':
+    app = ApplicationBuilder().token(TOKEN).build()
+    
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CallbackQueryHandler(button_handler))
+    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), receive_form_data))
+    
+    print("Service Bot စတင်အလုပ်လုပ်နေပါပြီ...")
+    app.run_polling()
         photo_file = update.message.photo[-1].file_id
         caption = update.message.caption or "စာသားမပါပါ"
         
