@@ -7,7 +7,6 @@ from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandle
 TOKEN = "8899600101:AAH0_kwUb6WfPEbX1g31zakyo5v7IjBPsmM"
 ADMIN_ID = 8643293859
 
-# Render က Port တောင်းဆိုမှုကို ဖြေရှင်းရန်အတွက် အသေးစား Web Server တစ်ခု
 class SimpleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -26,7 +25,7 @@ PAYMENT_INFO = (
     "• Phone: 09779412905\n"
     "• Name: Mg Pyae Sone Aung\n"
     "--------------------------------\n"
-    "👇 *ငွေလွှဲပြီးပါက ငွေလွှဲစလစ် (Screenshot ပုံ) နှင့်တကွ လိုအပ်သော အချက်အလက်များကို ပုံနှင့် စာသားတွဲလျက် (သို့မဟုတ်) ပုံတစ်ပုံချင်း ပို့ပေးပါခင်ဗျာ.*"
+    "👇 ငွေလွှဲပြီးပါက ငွေလွှဲစလစ် (Screenshot ပုံ) နှင့်တကွ လိုအပ်သော အချက်အလက်များကို ပုံနှင့် စာသားတွဲလျက် ပို့ပေးပါခင်ဗျာ။"
 )
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -105,6 +104,59 @@ async def receive_form_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("ကျေးဇူးပြု၍ ပထမဆုံး /start ကို နှိပ်ပြီး Service တစ်ခုကို အရင်ရွေးချယ်ပေးပါ။")
         return
 
+    if update.message.photo:
+        photo_file = update.message.photo[-1].file_id
+        caption = update.message.caption or "စာသားမပါပါ"
+        
+        admin_message = (
+            "📸 Order အသစ် (စလစ်ပါဝင်သည်) ဝင်ရောက်လာပါပြီ!\n\n"
+            f"Service: {selected_service}\n"
+            f"Customer: @{user.username or 'No Username'} (ID: {user.id})\n"
+            f"ဖောက်သည်ရေးထားသော စာ/အချက်အလက်:\n{caption}"
+        )
+        
+        try:
+            await context.bot.send_photo(chat_id=ADMIN_ID, photo=photo_file, caption=admin_message)
+        except Exception as e:
+            print(f"Admin ထံ ပုံပို့မရပါ: {e}")
+
+    elif update.message.text:
+        user_input = update.message.text
+        
+        admin_message = (
+            "🚨 Order အသစ် ဝင်ရောက်လာပါပြီ!\n\n"
+            f"Service: {selected_service}\n"
+            f"Customer: @{user.username or 'No Username'} (ID: {user.id})\n"
+            f"ဖြည့်ထားသော အချက်အလက်:\n{user_input}"
+        )
+        
+        try:
+            await context.bot.send_message(chat_id=ADMIN_ID, text=admin_message)
+        except Exception as e:
+            print(f"Admin ထံ Noti ပို့မရပါ: {e}")
+
+    success_text = (
+        "Order နှင့် အချက်အလက်များကို လက်ခံရရှိပါပြီ။\n\n"
+        "Admin မှ ငွေလွှဲစလစ်နှင့် အချက်အလက်များကို စစ်ဆေးပြီး အမြန်ဆုံး ဆက်သွယ်ပေးပါမည်။\n\n"
+        "ပင်မမီနူးသို့ ပြန်သွားရန် /start ကို နှိပ်ပါ။"
+    )
+    await update.message.reply_text(success_text)
+    
+    context.user_data.clear()
+
+if __name__ == '__main__':
+    server_thread = threading.Thread(target=run_web_server)
+    server_thread.daemon = True
+    server_thread.start()
+
+    app = ApplicationBuilder().token(TOKEN).build()
+    
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CallbackQueryHandler(button_handler))
+    app.add_handler(MessageHandler((filters.TEXT | filters.PHOTO) & (~filters.COMMAND), receive_form_data))
+    
+    print("Service Bot စတင်အလုပ်လုပ်နေပါပြီ...")
+    app.run_polling()
     if update.message.photo:
         photo_file = update.message.photo[-1].file_id
         caption = update.message.caption or "စာသားမပါပါ"
